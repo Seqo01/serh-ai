@@ -3,3 +3,5 @@ python-dotenv
 numpy
 pandas
 schedule
+flask
+flask-cors

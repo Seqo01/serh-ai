@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #8b5cf6 50%, #ec4899 75%, #f59e0b 100%);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .card-hover {
+            transition: all 0.3s ease-in-out;
+            border: 2px solid transparent;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px) scale(1.02);
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #10b981, #34d399, #6ee7b7) border-box;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+        }
+        .status-online {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        .status-offline {
+            background-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+            to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div x-data="dashboard()" x-init="init()">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg relative overflow-hidden">
+            <div class="absolute inset-0 bg-black opacity-10"></div>
+            <div class="container mx-auto px-6 py-6 relative z-10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="floating-animation">
+                            <i class="fas fa-chart-line text-3xl text-yellow-300"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
+                                Trading Dashboard
+                            </h1>
+                            <p class="text-sm text-blue-200 mt-1">Advanced Crypto Trading Platform</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                <div class="glass-effect rounded-full px-4 py-2">
+                    <div class="flex items-center space-x-4">
+                        <!-- API Status -->
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 rounded-full" 
+                                 :class="apiStatus.api_connected ? 'bg-green-500' : 'bg-red-500'"></div>
+                            <span class="text-sm font-medium" 
+                                  :class="apiStatus.api_connected ? 'text-green-600' : 'text-red-600'">
+                                <span x-text="isLiveTrading ? 'LIVE TRADING' : 'MOCK MODE'"></span>
+                            </span>
+                        </div>
+                        
+                        <!-- Live Trading -->
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium">Live Trading:</span>
+                            <button @click="toggleLiveTrading()" class="w-12 h-6 rounded-full transition-colors duration-200" 
+                                    :class="isLiveTrading ? 'bg-green-500' : 'bg-gray-400'">
+                                <div class="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200"
+                                     :class="isLiveTrading ? 'translate-x-6' : 'translate-x-0.5'"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                        <div class="glass-effect rounded-full px-4 py-2">
+                            <i class="fas fa-clock text-sm mr-2"></i>
+                            <span class="text-sm font-medium" x-text="new Date().toLocaleTimeString()"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-6 py-8">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full -mr-10 -mt-10 opacity-10"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Portfolio Value</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="portfolio.total_value ? '$' + portfolio.total_value.toFixed(2) : 'Loading...'"></p>
+                            <p class="text-xs text-green-600 mt-1">+2.5% today</p>
+                        </div>
+                        <div class="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full">
+                            <i class="fas fa-wallet text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full -mr-10 -mt-10 opacity-10"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Balance</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="portfolio.available_balance ? '$' + portfolio.available_balance.toFixed(2) : 'Loading...'"></p>
+                            <p class="text-xs text-blue-600 mt-1">Available</p>
+                        </div>
+                        <div class="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-full">
+                            <i class="fas fa-coins text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full -mr-10 -mt-10 opacity-10"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Token Positions</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="portfolio.positions ? portfolio.positions.length : 0"></p>
+                            <p class="text-xs text-purple-600 mt-1" x-text="portfolio.positions && portfolio.positions.length > 0 ? '$' + portfolio.positions.reduce((sum, pos) => sum + (pos.value_usd || 0), 0).toFixed(2) : 'No tokens'"></p>
+                        </div>
+                        <div class="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full">
+                            <i class="fas fa-coins text-2xl text-white"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Token Positions Details -->
+                    <div x-show="portfolio.positions && portfolio.positions.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Your Holdings:</h4>
+                        <div class="space-y-2 max-h-32 overflow-y-auto">
+                            <template x-for="position in portfolio.positions" :key="position.token_address">
+                                <div class="flex items-center justify-between text-xs bg-gray-50 rounded-lg p-2">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                        <span class="font-medium" x-text="position.token_address.substring(0, 8) + '...'"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-semibold" x-text="position.amount.toFixed(2)"></div>
+                                        <div class="text-gray-500" x-text="'$' + position.value_usd.toFixed(2)"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full -mr-10 -mt-10 opacity-10"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Trades</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="trades.length"></p>
+                            <p class="text-xs text-orange-600 mt-1">All time</p>
+                        </div>
+                        <div class="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full">
+                            <i class="fas fa-exchange-alt text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Main Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Manual Trade Panel -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mr-3">
+                            <i class="fas fa-hand-paper text-white"></i>
+                        </div>
+                        Manual Trade
+                    </h2>
+                    
+                    <form @submit.prevent="executeTrade()">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">From Token (Your Balance)</label>
+                                <select x-model="tradeForm.fromToken" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select token... (Available: <span x-text="availableTokens.length"></span>)</option>
+                                    <template x-for="token in availableTokens" :key="token.symbol">
+                                        <option :value="token.address" x-text="token.symbol + ' ($' + token.price.toFixed(6) + ') - Balance: ' + token.balance.toFixed(2)"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">To Token</label>
+                                <select x-model="tradeForm.toToken" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select token... (Tokens: <span x-text="tokens.length"></span>)</option>
+                                    <template x-for="token in tokens" :key="token.symbol">
+                                        <option :value="token.address" x-text="token.symbol + ' ($' + token.price.toFixed(2) + ')'"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                                <input type="number" x-model="tradeForm.amount" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter amount...">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                                <input type="text" x-model="tradeForm.reason" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Trade reason...">
+                            </div>
+
+                            <button type="submit" :disabled="isTrading" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <span x-show="!isTrading" class="flex items-center justify-center">
+                                    <i class="fas fa-rocket mr-2"></i>
+                                    Execute Trade
+                                </span>
+                                <span x-show="isTrading" class="flex items-center justify-center">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    Executing...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Advanced Features Panel -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mr-3">
+                            <i class="fas fa-brain text-white"></i>
+                        </div>
+                        Advanced Features
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Risk Management -->
+                        <div class="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showRiskManagement()">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-shield-alt text-red-500 mr-2"></i>
+                                    <h3 class="font-semibold text-gray-900">Risk Management</h3>
+                                </div>
+                                <i class="fas fa-chevron-right text-red-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-600">Stop-loss, Take-profit, Position sizing</p>
+                        </div>
+                        
+                        <!-- Technical Analysis -->
+                        <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showTechnicalAnalysis()">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+                                    <h3 class="font-semibold text-gray-900">Technical Analysis</h3>
+                                </div>
+                                <i class="fas fa-chevron-right text-blue-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-600">RSI, MACD, Bollinger Bands</p>
+                        </div>
+                        
+                        <!-- Sentiment Analysis -->
+                        <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showSentimentAnalysis()">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-heart text-green-500 mr-2"></i>
+                                    <h3 class="font-semibold text-gray-900">Sentiment Analysis</h3>
+                                </div>
+                                <i class="fas fa-chevron-right text-green-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-600">Market sentiment tracking</p>
+                        </div>
+                        
+                        <!-- Arbitrage Detection -->
+                        <div class="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showArbitrageDetection()">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-exchange-alt text-yellow-500 mr-2"></i>
+                                    <h3 class="font-semibold text-gray-900">Arbitrage Detection</h3>
+                                </div>
+                                <i class="fas fa-chevron-right text-yellow-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-600">Price difference opportunities</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategy Panel -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mr-3">
+                            <i class="fas fa-robot text-white"></i>
+                        </div>
+                        Trading Strategy
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">Auto Trading</span>
+                            <button @click="runStrategy()" :disabled="isRunningStrategy" class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <span x-show="!isRunningStrategy" class="flex items-center">
+                                    <i class="fas fa-play mr-2"></i>
+                                    Run Strategy
+                                </span>
+                                <span x-show="isRunningStrategy" class="flex items-center">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    Running...
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Token List with Scroll -->
+                        <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+                            <div class="space-y-2 p-2">
+                                <template x-for="token in tokens" :key="token.symbol">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="font-medium text-gray-900" x-text="token.symbol"></span>
+                                            <span class="text-sm text-gray-600" x-text="'$' + token.price.toFixed(2)"></span>
+                                        </div>
+                                        <button @click="getSignal(token.symbol)" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded hover:bg-blue-50 transition-colors">
+                                            Get Signal
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Token Panel -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg p-6 card-hover mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                    <div class="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mr-3">
+                        <i class="fas fa-plus text-white"></i>
+                    </div>
+                    Custom Token Ekle
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">
+                    DexScreener'dan token bulun, contract adresini kopyalayın ve buraya yapıştırın. 
+                    Sonra manuel trade ile o token'ı satın alabilirsiniz.
+                </p>
+                
+                <form @submit.prevent="addCustomToken()">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Token Symbol</label>
+                            <input type="text" x-model="customToken.symbol" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Örn: PEPE" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contract Address</label>
+                            <input type="text" x-model="customToken.address" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="0x..." required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" :disabled="isAddingToken" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <span x-show="!isAddingToken" class="flex items-center justify-center">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Token Ekle
+                                </span>
+                                <span x-show="isAddingToken" class="flex items-center justify-center">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    Ekleniyor...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Trade History -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg p-6 card-hover">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <div class="p-2 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg mr-3">
+                        <i class="fas fa-history text-white"></i>
+                    </div>
+                    Trade History
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="trade in trades.slice().reverse()" :key="trade.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="new Date(trade.timestamp).toLocaleString()"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="getTokenSymbol(trade.from_token)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="getTokenSymbol(trade.to_token)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="trade.amount"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="trade.reason"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                                              :class="trade.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                              x-text="trade.status"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function dashboard() {
+            return {
+                apiStatus: {},
+                portfolio: {},
+                tokens: [],
+                availableTokens: [],
+                trades: [],
+                tradeForm: {
+                    fromToken: '',
+                    toToken: '',
+                    amount: '',
+                    reason: ''
+                },
+                customToken: {
+                    symbol: '',
+                    address: ''
+                },
+                isTrading: false,
+                isRunningStrategy: false,
+                isAddingToken: false,
+                isLiveTrading: false,
+
+                async init() {
+                    // İlk yüklemede sadece kritik verileri yükle
+                    await Promise.all([
+                        this.loadApiStatus(),
+                        this.loadPortfolio()
+                    ]);
+                    
+                    // Tokens, available tokens ve trades'i paralel yükle
+                    setTimeout(() => {
+                        Promise.all([
+                            this.loadTokens(),
+                            this.loadAvailableTokens(),
+                            this.loadTrades()
+                        ]);
+                    }, 100);
+                    
+                    // Daha sık güncelleme
+                    setInterval(() => this.loadPortfolio(), 5000); // Portfolio her 5 saniyede
+                    setInterval(() => this.loadAvailableTokens(), 5000); // Available tokens her 5 saniyede
+                    setInterval(() => this.loadTokens(), 10000); // Tokens her 10 saniyede
+                    setInterval(() => this.loadTrades(), 15000); // Trades her 15 saniyede
+                    setInterval(() => this.updateTime(), 1000); // Time her saniye
+                },
+
+                updateTime() {
+                    // This will trigger Alpine.js reactivity for time display
+                    this.currentTime = new Date().toLocaleTimeString();
+                },
+
+                async loadData() {
+                    try {
+                        await Promise.all([
+                            this.loadApiStatus(),
+                            this.loadPortfolio(),
+                            this.loadTokens(),
+                            this.loadTrades()
+                        ]);
+                    } catch (error) {
+                        console.error('Error loading data:', error);
+                    }
+                },
+
+                async loadApiStatus() {
+                    const response = await fetch('/api/status');
+                    this.apiStatus = await response.json();
+                },
+
+                async loadPortfolio() {
+                    try {
+                        const response = await fetch('/api/portfolio');
+                        const data = await response.json();
+                        console.log('Portfolio loaded:', data);
+                        this.portfolio = data;
+                    } catch (error) {
+                        console.error('Error loading portfolio:', error);
+                    }
+                },
+
+                async loadTokens() {
+                    try {
+                        const response = await fetch('/api/tokens');
+                        const data = await response.json();
+                        console.log('Tokens loaded:', data);
+                        this.tokens = data.tokens || [];
+                        console.log('Tokens array:', this.tokens);
+                    } catch (error) {
+                        console.error('Error loading tokens:', error);
+                        this.tokens = [];
+                    }
+                },
+
+                async loadAvailableTokens() {
+                    try {
+                        const response = await fetch('/api/available-tokens');
+                        const data = await response.json();
+                        console.log('Available tokens loaded:', data);
+                        this.availableTokens = data.available_tokens || [];
+                        console.log('Available tokens array:', this.availableTokens);
+                    } catch (error) {
+                        console.error('Error loading available tokens:', error);
+                        this.availableTokens = [];
+                    }
+                },
+
+                async loadTrades() {
+                    const response = await fetch('/api/trades');
+                    const data = await response.json();
+                    this.trades = data.trades;
+                },
+
+                async executeTrade() {
+                    this.isTrading = true;
+                    try {
+                        const response = await fetch('/api/trade', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.tradeForm)
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('Trade executed successfully!');
+                            this.tradeForm = { fromToken: '', toToken: '', amount: '', reason: '' };
+                               // Portfolio, available tokens ve trades'i güncelle
+                               await Promise.all([
+                                   this.loadTrades(),
+                                   this.loadPortfolio(),
+                                   this.loadAvailableTokens()
+                               ]);
+                        } else {
+                            alert('Trade failed: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('Error executing trade: ' + error.message);
+                    } finally {
+                        this.isTrading = false;
+                    }
+                },
+
+                async runStrategy() {
+                    this.isRunningStrategy = true;
+                    try {
+                        const response = await fetch('/api/strategy/run');
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('Strategy cycle completed!');
+                            // Portfolio ve trades'i güncelle
+                            await Promise.all([
+                                this.loadPortfolio(),
+                                this.loadTrades()
+                            ]);
+                        } else {
+                            alert('Strategy failed: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('Error running strategy: ' + error.message);
+                    } finally {
+                        this.isRunningStrategy = false;
+                    }
+                },
+
+                async getSignal(symbol) {
+                    try {
+                        const response = await fetch(`/api/strategy/signal/${symbol}`);
+                        const signal = await response.json();
+                        
+                        alert(`${symbol} Signal: ${signal.signal}\nConfidence: ${(signal.confidence * 100).toFixed(1)}%\nReason: ${signal.reason}`);
+                    } catch (error) {
+                        alert('Error getting signal: ' + error.message);
+                    }
+                },
+
+                getTokenSymbol(address) {
+                    const token = this.tokens.find(t => t.address === address);
+                    return token ? token.symbol : 'Unknown';
+                },
+
+                async addCustomToken() {
+                    this.isAddingToken = true;
+                    try {
+                        const response = await fetch('/api/add-token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.customToken)
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('Custom token başarıyla eklendi!');
+                            this.customToken = { symbol: '', address: '' };
+                            await this.loadTokens(); // Token listesini yenile
+                        } else {
+                            alert('Token ekleme başarısız: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('Error adding token: ' + error.message);
+                    } finally {
+                        this.isAddingToken = false;
+                    }
+                },
+
+                toggleLiveTrading() {
+                    this.isLiveTrading = !this.isLiveTrading;
+                    
+                    if (this.isLiveTrading) {
+                        // Live trading açıldığında
+                        alert('⚠️ DİKKAT: Live Trading aktif! Gerçek para ile işlem yapılacak!');
+                        console.log('Live Trading: ON - Gerçek API kullanılıyor');
+                    } else {
+                        // Live trading kapandığında
+                        alert('Live Trading kapatıldı. Mock mode aktif.');
+                        console.log('Live Trading: OFF - Mock mode aktif');
+                    }
+                    
+                    // Backend'e live trading durumunu bildir
+                    this.updateLiveTradingStatus();
+                },
+
+                    async updateLiveTradingStatus() {
+                        try {
+                            const response = await fetch('/api/live-trading', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ isLiveTrading: this.isLiveTrading })
+                            });
+                            
+                            const result = await response.json();
+                            console.log('Live trading status updated:', result);
+                        } catch (error) {
+                            console.error('Error updating live trading status:', error);
+                        }
+                    },
+
+                    // Advanced Features Functions
+                    showRiskManagement() {
+                        alert('🛡️ Risk Management\n\n• Stop Loss: 5%\n• Take Profit: 15%\n• Max Position: 10%\n• Risk per Trade: 2%');
+                    },
+
+                    showTechnicalAnalysis() {
+                        alert('📈 Technical Analysis\n\n• RSI: Overbought >70, Oversold <30\n• MACD: Bullish/Bearish signals\n• Bollinger Bands: Volatility analysis\n• Moving Averages: Trend detection');
+                    },
+
+                    showSentimentAnalysis() {
+                        alert('❤️ Sentiment Analysis\n\n• Market sentiment tracking\n• Social media analysis\n• News sentiment\n• Fear & Greed Index');
+                    },
+
+                    showArbitrageDetection() {
+                        alert('🔄 Arbitrage Detection\n\n• Price difference opportunities\n• Cross-exchange arbitrage\n• Triangular arbitrage\n• Statistical arbitrage');
+                    }
+            }
+        }
+    </script>
+</body>
+</html>

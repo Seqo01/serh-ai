@@ -42,7 +42,7 @@ class RecallAPI:
     
     def execute_trade(self, from_token: str, to_token: str, amount: str, reason: str = "") -> Dict:
         """Execute a trade"""
-        endpoint = "/api/trade/execute"
+        endpoint = "/api/trade"
         data = {
             "fromToken": from_token,
             "toToken": to_token,
@@ -52,9 +52,32 @@ class RecallAPI:
         return self._make_request("POST", endpoint, data)
     
     def get_portfolio(self) -> Dict:
-        """Get current portfolio information"""
-        endpoint = "/api/agent/portfolio"
-        return self._make_request("GET", endpoint)
+        """Get current portfolio information - using balances endpoint"""
+        try:
+            endpoint = "/api/agent/balances"
+            result = self._make_request("GET", endpoint)
+            
+            # If API fails, return error
+            if 'error' in result:
+                return result
+            
+            # Transform API response to our expected format
+            if 'success' in result and result['success']:
+                balances = result.get('balances', [])
+                total_value = sum(balance.get('amount', 0) for balance in balances)
+                available_balance = next((b['amount'] for b in balances if b.get('symbol') == 'USDC'), 0)
+                
+                return {
+                    'total_value': total_value,
+                    'available_balance': available_balance,
+                    'positions': balances,
+                    'current_prices': {}
+                }
+            else:
+                return {'error': 'API response format error'}
+                
+        except Exception as e:
+            return {'error': str(e)}
     
     def get_competition_leaderboard(self, competition_id: Optional[str] = None) -> Dict:
         """Get competition leaderboard"""
@@ -70,7 +93,12 @@ class RecallAPI:
     
     def get_agent_info(self) -> Dict:
         """Get agent information"""
-        endpoint = "/api/agent"
+        endpoint = "/api/agent/profile"
+        return self._make_request("GET", endpoint)
+    
+    def get_trade_history(self) -> Dict:
+        """Get agent trade history"""
+        endpoint = "/api/agent/trades"
         return self._make_request("GET", endpoint)
     
     def health_check(self) -> Dict:

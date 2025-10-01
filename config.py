@@ -30,11 +30,36 @@ class Config:
     WBTC_ADDRESS = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
     USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     
-    # Trading Pairs
+    # Popular Tokens - Major Cryptocurrencies
+    LINK_ADDRESS = "0x514910771AF9Ca656af840dff83E8264EcF986CA"  # Chainlink
+    UNI_ADDRESS = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"  # Uniswap
+    AAVE_ADDRESS = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"  # Aave
+    MATIC_ADDRESS = "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0"  # Polygon (MATIC)
+    AVAX_ADDRESS = "0x85f138bfEE4ef8e540890CFb48F620571d67Eda3"  # Avalanche (WAVAX on Ethereum)
+    SOL_ADDRESS = "0xD31a59c85aE9D8edEFeC411D448f90841571b89c"  # Solana (Wrapped SOL on Ethereum)
+    ADA_ADDRESS = "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47"  # Cardano (Wrapped ADA on Ethereum)
+    DOT_ADDRESS = "0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402"  # Polkadot (Wrapped DOT on Ethereum)
+    ATOM_ADDRESS = "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB"  # Cosmos (Wrapped ATOM on Ethereum)
+    BNB_ADDRESS = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52"  # Binance Coin (Wrapped BNB on Ethereum)
+    
+    # Trading Pairs - Popular Tokens Only
     TRADING_PAIRS = [
+        # Major Tokens
         {"from": USDC_ADDRESS, "to": WETH_ADDRESS, "symbol": "WETH"},
         {"from": USDC_ADDRESS, "to": WBTC_ADDRESS, "symbol": "WBTC"},
-        {"from": USDC_ADDRESS, "to": USDT_ADDRESS, "symbol": "USDT"}
+        {"from": USDC_ADDRESS, "to": USDT_ADDRESS, "symbol": "USDT"},
+        
+        # Popular Altcoins
+        {"from": USDC_ADDRESS, "to": LINK_ADDRESS, "symbol": "LINK"},
+        {"from": USDC_ADDRESS, "to": UNI_ADDRESS, "symbol": "UNI"},
+        {"from": USDC_ADDRESS, "to": AAVE_ADDRESS, "symbol": "AAVE"},
+        {"from": USDC_ADDRESS, "to": MATIC_ADDRESS, "symbol": "MATIC"},
+        {"from": USDC_ADDRESS, "to": AVAX_ADDRESS, "symbol": "AVAX"},
+        {"from": USDC_ADDRESS, "to": SOL_ADDRESS, "symbol": "SOL"},
+        {"from": USDC_ADDRESS, "to": ADA_ADDRESS, "symbol": "ADA"},
+        {"from": USDC_ADDRESS, "to": DOT_ADDRESS, "symbol": "DOT"},
+        {"from": USDC_ADDRESS, "to": ATOM_ADDRESS, "symbol": "ATOM"},
+        {"from": USDC_ADDRESS, "to": BNB_ADDRESS, "symbol": "BNB"},
     ]
     
     @classmethod
