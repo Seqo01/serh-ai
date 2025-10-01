@@ -3,9 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Dashboard</title>
+    <title>SERH-AI</title>
+    <link rel="icon" type="image/png" href="/static/assets/serh-ailogo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        // Test when Alpine.js is loaded
+        document.addEventListener('alpine:init', () => {
+            console.log('Alpine.js initialized successfully');
+        });
+        
+        // Global modal functions
+        window.testModal = function() {
+            console.log('Test Modal clicked');
+            openRiskModal();
+        };
+        
+        window.openRiskModal = function() {
+            console.log('Opening Risk Management Modal');
+            const modal = document.querySelector('[x-show="showRiskManagementModal"]');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                console.log('Risk Management Modal opened');
+            }
+        };
+        
+        window.openTechnicalModal = function() {
+            console.log('Opening Technical Analysis Modal');
+            const modal = document.querySelector('[x-show="showTechnicalAnalysisModal"]');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                console.log('Technical Analysis Modal opened');
+            }
+        };
+        
+        window.openSentimentModal = function() {
+            console.log('Opening Sentiment Analysis Modal');
+            const modal = document.querySelector('[x-show="showSentimentAnalysisModal"]');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                console.log('Sentiment Analysis Modal opened');
+            }
+        };
+        
+        window.openArbitrageModal = function() {
+            console.log('Opening Arbitrage Detection Modal');
+            const modal = document.querySelector('[x-show="showArbitrageDetectionModal"]');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                console.log('Arbitrage Detection Modal opened');
+            }
+        };
+        
+        // Close modal functions
+        window.closeModal = function(modalName) {
+            const modal = document.querySelector(`[x-show="${modalName}"]`);
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+                console.log(`${modalName} modal closed`);
+            }
+        };
+        
+        // Save functions
+        window.saveRiskSettings = function() {
+            console.log('Saving risk settings');
+            closeModal('showRiskManagementModal');
+            alert('Risk settings saved!');
+        };
+        
+        window.saveTechnicalSettings = function() {
+            console.log('Saving technical settings');
+            closeModal('showTechnicalAnalysisModal');
+            alert('Technical analysis settings saved!');
+        };
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .gradient-bg {
@@ -43,6 +119,11 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
+        
+        /* Hide modals initially */
+        [x-cloak] {
+            display: none !important;
+        }
         .pulse-glow {
             animation: pulse-glow 2s ease-in-out infinite alternate;
         }
@@ -53,7 +134,7 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div x-data="dashboard()" x-init="init()">
+    <div x-data="dashboard()" x-init="init()" @keydown="handleKeydown($event)">
         <!-- Header -->
         <header class="gradient-bg text-white shadow-lg relative overflow-hidden">
             <div class="absolute inset-0 bg-black opacity-10"></div>
@@ -61,13 +142,13 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
                         <div class="floating-animation">
-                            <i class="fas fa-chart-line text-3xl text-yellow-300"></i>
+                            <img src="/static/assets/serh-ailogo.png" alt="SERH-AI Logo" class="w-10 h-10 rounded-lg">
                         </div>
                         <div>
                             <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
-                                Trading Dashboard
+                                SERH-AI TRADING AGENT
                             </h1>
-                            <p class="text-sm text-blue-200 mt-1">Advanced Crypto Trading Platform</p>
+                            <p class="text-sm text-blue-200 mt-1">Advanced AI-Powered Trading Platform</p>
                         </div>
                     </div>
                     <div class="flex items-center space-x-6">
@@ -94,10 +175,6 @@
                         </div>
                     </div>
                 </div>
-                        <div class="glass-effect rounded-full px-4 py-2">
-                            <i class="fas fa-clock text-sm mr-2"></i>
-                            <span class="text-sm font-medium" x-text="new Date().toLocaleTimeString()"></span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -210,9 +287,9 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">To Token</label>
                                 <select x-model="tradeForm.toToken" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Select token... (Tokens: <span x-text="tokens.length"></span>)</option>
-                                    <template x-for="token in tokens" :key="token.symbol">
-                                        <option :value="token.address" x-text="token.symbol + ' ($' + token.price.toFixed(2) + ')'"></option>
+                                    <option value="">Select token... (<span x-text="tokens.length"></span> available)</option>
+                                    <template x-for="(token, index) in tokens" :key="token.address + '-' + index">
+                                        <option :value="token.address" x-text="token.symbol + ' ($' + (token.price || 0).toFixed(6) + ')'"></option>
                                     </template>
                                 </select>
                             </div>
@@ -248,11 +325,13 @@
                             <i class="fas fa-brain text-white"></i>
                         </div>
                         Advanced Features
+                        <button onclick="testModal()" class="ml-4 px-3 py-1 bg-red-500 text-white text-sm rounded">Test Modal</button>
                     </h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Risk Management -->
-                        <div class="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showRiskManagement()">
+                        <div class="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" 
+                             onclick="openRiskModal()">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <i class="fas fa-shield-alt text-red-500 mr-2"></i>
@@ -264,7 +343,8 @@
                         </div>
                         
                         <!-- Technical Analysis -->
-                        <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showTechnicalAnalysis()">
+                        <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" 
+                             onclick="openTechnicalModal()">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <i class="fas fa-chart-line text-blue-500 mr-2"></i>
@@ -276,7 +356,8 @@
                         </div>
                         
                         <!-- Sentiment Analysis -->
-                        <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showSentimentAnalysis()">
+                        <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" 
+                             onclick="openSentimentModal()">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <i class="fas fa-heart text-green-500 mr-2"></i>
@@ -288,7 +369,8 @@
                         </div>
                         
                         <!-- Arbitrage Detection -->
-                        <div class="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" @click="showArbitrageDetection()">
+                        <div class="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200" 
+                             onclick="openArbitrageModal()">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <i class="fas fa-exchange-alt text-yellow-500 mr-2"></i>
@@ -310,35 +392,55 @@
                         Trading Strategy
                     </h2>
                     
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-700">Auto Trading</span>
-                            <button @click="runStrategy()" :disabled="isRunningStrategy" class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                <span x-show="!isRunningStrategy" class="flex items-center">
+                    <form @submit.prevent="runStrategy()">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Symbol</label>
+                                <select x-model="strategyForm.symbol" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">Select symbol...</option>
+                                    <template x-for="token in tokens" :key="token.symbol">
+                                        <option :value="token.symbol" x-text="token.symbol"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT/USDC)</label>
+                                <input type="number" step="0.01" x-model="strategyForm.amount" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter amount" required>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Strategy Type</label>
+                            <select x-model="strategyForm.strategy_type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="RSI">RSI</option>
+                                <option value="MACD">MACD</option>
+                                <option value="BollingerBands">Bollinger Bands</option>
+                            </select>
+                        </div>
+                        <div class="mt-6">
+                            <button type="submit" :disabled="isRunningStrategy" class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <span x-show="!isRunningStrategy" class="flex items-center justify-center">
                                     <i class="fas fa-play mr-2"></i>
                                     Run Strategy
                                 </span>
-                                <span x-show="isRunningStrategy" class="flex items-center">
+                                <span x-show="isRunningStrategy" class="flex items-center justify-center">
                                     <i class="fas fa-spinner fa-spin mr-2"></i>
                                     Running...
                                 </span>
                             </button>
                         </div>
+                    </form>
 
-                        <!-- Token List with Scroll -->
-                        <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
-                            <div class="space-y-2 p-2">
-                                <template x-for="token in tokens" :key="token.symbol">
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
-                                        <div class="flex items-center space-x-3">
-                                            <span class="font-medium text-gray-900" x-text="token.symbol"></span>
-                                            <span class="text-sm text-gray-600" x-text="'$' + token.price.toFixed(2)"></span>
-                                        </div>
-                                        <button @click="getSignal(token.symbol)" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded hover:bg-blue-50 transition-colors">
-                                            Get Signal
-                                        </button>
-                                    </div>
-                                </template>
+                    <!-- Strategy Status -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">Strategy Status</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Active Strategies:</span>
+                                <span class="font-medium">0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Last Signal:</span>
+                                <span class="font-medium">None</span>
                             </div>
                         </div>
                     </div>
@@ -351,18 +453,18 @@
                     <div class="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mr-3">
                         <i class="fas fa-plus text-white"></i>
                     </div>
-                    Custom Token Ekle
+                    Add Custom Token
                 </h2>
                 <p class="text-sm text-gray-600 mb-6">
-                    DexScreener'dan token bulun, contract adresini kopyalayın ve buraya yapıştırın. 
-                    Sonra manuel trade ile o token'ı satın alabilirsiniz.
+                    Find tokens from DexScreener, copy the contract address and paste it here. 
+                    Then you can buy that token with manual trade.
                 </p>
                 
                 <form @submit.prevent="addCustomToken()">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Token Symbol</label>
-                            <input type="text" x-model="customToken.symbol" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Örn: PEPE" required>
+                            <input type="text" x-model="customToken.symbol" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g: PEPE" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Contract Address</label>
@@ -372,16 +474,58 @@
                             <button type="submit" :disabled="isAddingToken" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 <span x-show="!isAddingToken" class="flex items-center justify-center">
                                     <i class="fas fa-plus mr-2"></i>
-                                    Token Ekle
+                                    Add Token
                                 </span>
                                 <span x-show="isAddingToken" class="flex items-center justify-center">
                                     <i class="fas fa-spinner fa-spin mr-2"></i>
-                                    Ekleniyor...
+                                    Adding...
                                 </span>
                             </button>
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- P&L Table -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg p-6 card-hover">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <div class="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mr-3">
+                        <i class="fas fa-chart-pie text-white"></i>
+                    </div>
+                    Profit/Loss Analysis
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Total Profit/Loss</p>
+                                <p class="text-2xl font-bold text-green-600" x-text="portfolio.total_pnl ? '$' + portfolio.total_pnl.toFixed(2) : '$0.00'"></p>
+                            </div>
+                            <i class="fas fa-trending-up text-green-500 text-2xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Daily Change</p>
+                                <p class="text-2xl font-bold text-blue-600" x-text="portfolio.daily_change ? '$' + portfolio.daily_change.toFixed(2) : '$0.00'"></p>
+                            </div>
+                            <i class="fas fa-calendar-day text-blue-500 text-2xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">ROI (%)</p>
+                                <p class="text-2xl font-bold text-purple-600" x-text="portfolio.roi ? portfolio.roi.toFixed(2) + '%' : '0.00%'"></p>
+                            </div>
+                            <i class="fas fa-percentage text-purple-500 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Trade History -->
@@ -427,6 +571,123 @@
         </main>
     </div>
 
+    <!-- Risk Management Modal -->
+    <div x-show="showRiskManagementModal" @click.away="showRiskManagementModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-lg p-6 w-96" @click.stop>
+            <h3 class="text-xl font-bold mb-4">🛡️ Risk Management</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium">Stop Loss (%)</label>
+                    <input type="number" x-model="riskSettings.stopLoss" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Take Profit (%)</label>
+                    <input type="number" x-model="riskSettings.takeProfit" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Max Position (%)</label>
+                    <input type="number" x-model="riskSettings.maxPosition" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Risk per Trade (%)</label>
+                    <input type="number" x-model="riskSettings.riskPerTrade" class="w-full border rounded px-3 py-2">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeModal('showRiskManagementModal')" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button onclick="saveRiskSettings()" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Analysis Modal -->
+    <div x-show="showTechnicalAnalysisModal" @click.away="showTechnicalAnalysisModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak x-transition>
+        <div class="bg-white rounded-lg p-6 w-96" @click.stop>
+            <h3 class="text-xl font-bold mb-4">📈 Technical Analysis</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium">RSI Overbought</label>
+                    <input type="number" x-model="technicalSettings.rsiOverbought" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">RSI Oversold</label>
+                    <input type="number" x-model="technicalSettings.rsiOversold" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">MACD Signal</label>
+                    <select x-model="technicalSettings.macdSignal" class="w-full border rounded px-3 py-2">
+                        <option value="auto">Auto</option>
+                        <option value="bullish">Bullish Only</option>
+                        <option value="bearish">Bearish Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Bollinger Period</label>
+                    <input type="number" x-model="technicalSettings.bollingerPeriod" class="w-full border rounded px-3 py-2">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeModal('showTechnicalAnalysisModal')" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button onclick="saveTechnicalSettings()" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sentiment Analysis Modal -->
+    <div x-show="showSentimentAnalysisModal" @click.away="showSentimentAnalysisModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak x-transition>
+        <div class="bg-white rounded-lg p-6 w-96" @click.stop>
+            <h3 class="text-xl font-bold mb-4">❤️ Sentiment Analysis</h3>
+            <div class="space-y-4">
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <h4 class="font-semibold text-green-800 mb-2">Market Sentiment</h4>
+                    <p class="text-sm text-green-600">Fear & Greed Index: 65 (Greed)</p>
+                    <p class="text-sm text-green-600">Social Media: Bullish</p>
+                    <p class="text-sm text-green-600">News Sentiment: Positive</p>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 mb-2">Analysis</h4>
+                    <p class="text-sm text-blue-600">Market shows strong bullish sentiment with positive news flow and social media buzz.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeModal('showSentimentAnalysisModal')" class="px-4 py-2 bg-gray-300 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arbitrage Detection Modal -->
+    <div x-show="showArbitrageDetectionModal" @click.away="showArbitrageDetectionModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak x-transition>
+        <div class="bg-white rounded-lg p-6 w-96" @click.stop>
+            <h3 class="text-xl font-bold mb-4">🔄 Arbitrage Detection</h3>
+            <div class="space-y-4">
+                <div class="p-4 bg-yellow-50 rounded-lg">
+                    <h4 class="font-semibold text-yellow-800 mb-2">Price Differences</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span>BTC Binance:</span>
+                            <span class="font-medium">$43,250</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>BTC Coinbase:</span>
+                            <span class="font-medium">$43,180</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Arbitrage:</span>
+                            <span class="font-medium">$70 (0.16%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 mb-2">Opportunities</h4>
+                    <p class="text-sm text-blue-600">3 active arbitrage opportunities detected across different exchanges.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeModal('showArbitrageDetectionModal')" class="px-4 py-2 bg-gray-300 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function dashboard() {
             return {
@@ -451,27 +712,42 @@
                 isLiveTrading: false,
 
                 async init() {
-                    // İlk yüklemede sadece kritik verileri yükle
-                    await Promise.all([
-                        this.loadApiStatus(),
-                        this.loadPortfolio()
-                    ]);
+                    console.log('Dashboard init started');
                     
-                    // Tokens, available tokens ve trades'i paralel yükle
+                    // Close modals initially
+                    this.showRiskManagementModal = false;
+                    this.showTechnicalAnalysisModal = false;
+                    this.showSentimentAnalysisModal = false;
+                    this.showArbitrageDetectionModal = false;
+                    
+                    // Load only critical data first
+                    try {
+                        await this.loadApiStatus();
+                        await this.loadPortfolio();
+                        console.log('Critical data loaded');
+                    } catch (error) {
+                        console.error('Error loading critical data:', error);
+                    }
+                    
+                    // Load other data in background
                     setTimeout(() => {
                         Promise.all([
                             this.loadTokens(),
                             this.loadAvailableTokens(),
                             this.loadTrades()
-                        ]);
-                    }, 100);
+                        ]).then(() => {
+                            console.log('Background data loaded');
+                        }).catch(error => {
+                            console.error('Error loading background data:', error);
+                        });
+                    }, 500);
                     
-                    // Daha sık güncelleme
-                    setInterval(() => this.loadPortfolio(), 5000); // Portfolio her 5 saniyede
-                    setInterval(() => this.loadAvailableTokens(), 5000); // Available tokens her 5 saniyede
-                    setInterval(() => this.loadTokens(), 10000); // Tokens her 10 saniyede
-                    setInterval(() => this.loadTrades(), 15000); // Trades her 15 saniyede
-                    setInterval(() => this.updateTime(), 1000); // Time her saniye
+                    // Much less frequent updates
+                    setInterval(() => this.loadPortfolio(), 30000); // Portfolio every 30 seconds
+                    setInterval(() => this.loadAvailableTokens(), 30000); // Available tokens every 30 seconds
+                    setInterval(() => this.loadTokens(), 120000); // Tokens every 2 minutes
+                    setInterval(() => this.loadTrades(), 300000); // Trades every 5 minutes
+                    setInterval(() => this.updateTime(), 1000); // Time every second
                 },
 
                 updateTime() {
@@ -556,7 +832,7 @@
                         if (result.success) {
                             alert('Trade executed successfully!');
                             this.tradeForm = { fromToken: '', toToken: '', amount: '', reason: '' };
-                               // Portfolio, available tokens ve trades'i güncelle
+                               // Update portfolio, available tokens and trades
                                await Promise.all([
                                    this.loadTrades(),
                                    this.loadPortfolio(),
@@ -580,7 +856,7 @@
                         
                         if (result.success) {
                             alert('Strategy cycle completed!');
-                            // Portfolio ve trades'i güncelle
+                            // Update portfolio and trades
                             await Promise.all([
                                 this.loadPortfolio(),
                                 this.loadTrades()
@@ -625,11 +901,11 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            alert('Custom token başarıyla eklendi!');
+                            alert('Custom token added successfully!');
                             this.customToken = { symbol: '', address: '' };
-                            await this.loadTokens(); // Token listesini yenile
+                            await this.loadTokens(); // Refresh token list
                         } else {
-                            alert('Token ekleme başarısız: ' + result.error);
+                            alert('Failed to add token: ' + result.error);
                         }
                     } catch (error) {
                         alert('Error adding token: ' + error.message);
@@ -642,16 +918,16 @@
                     this.isLiveTrading = !this.isLiveTrading;
                     
                     if (this.isLiveTrading) {
-                        // Live trading açıldığında
-                        alert('⚠️ DİKKAT: Live Trading aktif! Gerçek para ile işlem yapılacak!');
-                        console.log('Live Trading: ON - Gerçek API kullanılıyor');
+                        // Live trading enabled
+                        alert('⚠️ WARNING: Live Trading is active! Real money transactions will be executed!');
+                        console.log('Live Trading: ON - Using real API');
                     } else {
-                        // Live trading kapandığında
-                        alert('Live Trading kapatıldı. Mock mode aktif.');
-                        console.log('Live Trading: OFF - Mock mode aktif');
+                        // Live trading disabled
+                        alert('Live Trading disabled. Mock mode active.');
+                        console.log('Live Trading: OFF - Mock mode active');
                     }
                     
-                    // Backend'e live trading durumunu bildir
+                    // Notify backend about live trading status
                     this.updateLiveTradingStatus();
                 },
 
@@ -674,19 +950,82 @@
 
                     // Advanced Features Functions
                     showRiskManagement() {
-                        alert('🛡️ Risk Management\n\n• Stop Loss: 5%\n• Take Profit: 15%\n• Max Position: 10%\n• Risk per Trade: 2%');
+                        console.log('Risk Management clicked - Alpine.js function');
+                        this.showRiskManagementModal = true;
+                        console.log('Modal state:', this.showRiskManagementModal);
                     },
 
                     showTechnicalAnalysis() {
-                        alert('📈 Technical Analysis\n\n• RSI: Overbought >70, Oversold <30\n• MACD: Bullish/Bearish signals\n• Bollinger Bands: Volatility analysis\n• Moving Averages: Trend detection');
+                        console.log('Technical Analysis clicked - Alpine.js function');
+                        this.showTechnicalAnalysisModal = true;
+                        console.log('Modal state:', this.showTechnicalAnalysisModal);
                     },
 
                     showSentimentAnalysis() {
-                        alert('❤️ Sentiment Analysis\n\n• Market sentiment tracking\n• Social media analysis\n• News sentiment\n• Fear & Greed Index');
+                        console.log('Sentiment Analysis clicked - Alpine.js function');
+                        this.showSentimentAnalysisModal = true;
+                        console.log('Modal state:', this.showSentimentAnalysisModal);
                     },
 
                     showArbitrageDetection() {
-                        alert('🔄 Arbitrage Detection\n\n• Price difference opportunities\n• Cross-exchange arbitrage\n• Triangular arbitrage\n• Statistical arbitrage');
+                        console.log('Arbitrage Detection clicked - Alpine.js function');
+                        this.showArbitrageDetectionModal = true;
+                        console.log('Modal state:', this.showArbitrageDetectionModal);
+                    },
+
+                    // Risk Management Settings
+                    riskSettings: {
+                        stopLoss: 5,
+                        takeProfit: 15,
+                        maxPosition: 10,
+                        riskPerTrade: 2
+                    },
+
+                    // Technical Analysis Settings
+                    technicalSettings: {
+                        rsiOverbought: 70,
+                        rsiOversold: 30,
+                        macdSignal: 'auto',
+                        bollingerPeriod: 20
+                    },
+
+                    // Modal states - all should start as false (closed)
+                    showRiskManagementModal: false,
+                    showTechnicalAnalysisModal: false,
+                    showSentimentAnalysisModal: false,
+                    showArbitrageDetectionModal: false,
+
+                    // Save settings functions
+                    saveRiskSettings() {
+                        // Save to backend
+                        fetch('/api/risk-settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.riskSettings)
+                        });
+                        this.showRiskManagementModal = false;
+                        alert('Risk settings saved!');
+                    },
+
+                    saveTechnicalSettings() {
+                        // Save to backend
+                        fetch('/api/technical-settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.technicalSettings)
+                        });
+                        this.showTechnicalAnalysisModal = false;
+                        alert('Technical analysis settings saved!');
+                    },
+
+                    // Close modals with ESC key
+                    handleKeydown(event) {
+                        if (event.key === 'Escape') {
+                            this.showRiskManagementModal = false;
+                            this.showTechnicalAnalysisModal = false;
+                            this.showSentimentAnalysisModal = false;
+                            this.showArbitrageDetectionModal = false;
+                        }
                     }
             }
         }

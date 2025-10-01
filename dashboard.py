@@ -26,9 +26,28 @@ active_trades = []
 # Mock portfolio data (in production, this would come from a database)
 mock_portfolio = {
     'total_value': 10000.0,
-    'available_balance': 10000.0,  # Başlangıçta sadece USDC/USDT bakiye
-    'positions': [],  # Token pozisyonları
-    'current_prices': {}
+    'available_balance': 10000.0,  # Initial USDC/USDT balance only
+    'positions': [],  # Token positions
+    'current_prices': {},
+    'total_pnl': 0.0,  # Total profit/loss
+    'daily_change': 0.0,  # Daily change
+    'roi': 0.0  # Return on Investment
+}
+
+# Risk Management Settings
+risk_settings = {
+    'stopLoss': 5,
+    'takeProfit': 15,
+    'maxPosition': 10,
+    'riskPerTrade': 2
+}
+
+# Technical Analysis Settings
+technical_settings = {
+    'rsiOverbought': 70,
+    'rsiOversold': 30,
+    'macdSignal': 'auto',
+    'bollingerPeriod': 20
 }
 
 # Custom tokens list (in production, this would come from a database)
@@ -75,8 +94,15 @@ def update_portfolio_after_trade(amount, from_token, to_token):
         total_token_value = sum(pos['value_usd'] for pos in mock_portfolio['positions'])
         mock_portfolio['total_value'] = mock_portfolio['available_balance'] + total_token_value
         
+        # Calculate P&L (simplified - in real scenario, you'd track entry prices)
+        initial_value = 10000.0  # Starting value
+        mock_portfolio['total_pnl'] = mock_portfolio['total_value'] - initial_value
+        mock_portfolio['daily_change'] = mock_portfolio['total_pnl'] * 0.1  # Simulate daily change
+        mock_portfolio['roi'] = (mock_portfolio['total_pnl'] / initial_value) * 100
+        
         print(f"Portfolio updated after trade: {amount} {from_token} -> {to_token}")
         print(f"New balance: {mock_portfolio['available_balance']}, Token positions: {len(mock_portfolio['positions'])}, Total: {mock_portfolio['total_value']}")
+        print(f"P&L: ${mock_portfolio['total_pnl']:.2f}, ROI: {mock_portfolio['roi']:.2f}%")
         
     except Exception as e:
         print(f"Error updating portfolio: {e}")
@@ -293,8 +319,16 @@ def get_tokens():
                 'timestamp': ''
             })
     
-        # Add custom tokens to the list
+        # Add custom tokens to the list (avoid duplicates)
+        seen_addresses = set()
+        for token in tokens:
+            seen_addresses.add(token['address'].lower())
+        
         for custom_token in custom_tokens:
+            # Skip if already exists
+            if custom_token['address'].lower() in seen_addresses:
+                continue
+                
             try:
                 # Try to get price for custom token using a different approach
                 # For now, use a mock price based on symbol or set to 0.001 for unknown tokens
@@ -324,6 +358,7 @@ def get_tokens():
                 custom_token['price'] = 0.001  # Default fallback
             
             tokens.append(custom_token)
+            seen_addresses.add(custom_token['address'].lower())
     
     return jsonify({'tokens': tokens})
 
@@ -379,6 +414,40 @@ def get_available_tokens():
         print(f"Error getting available tokens: {e}")
         return jsonify({'available_tokens': []})
 
+@app.route('/api/risk-settings', methods=['GET', 'POST'])
+def handle_risk_settings():
+    """Handle risk management settings"""
+    global risk_settings
+    
+    if request.method == 'GET':
+        return jsonify(risk_settings)
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            risk_settings.update(data)
+            print(f"Risk settings updated: {risk_settings}")
+            return jsonify({'success': True, 'settings': risk_settings})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+@app.route('/api/technical-settings', methods=['GET', 'POST'])
+def handle_technical_settings():
+    """Handle technical analysis settings"""
+    global technical_settings
+    
+    if request.method == 'GET':
+        return jsonify(technical_settings)
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            technical_settings.update(data)
+            print(f"Technical settings updated: {technical_settings}")
+            return jsonify({'success': True, 'settings': technical_settings})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
 @app.route('/api/strategy/signal/<symbol>')
 def get_strategy_signal(symbol):
     """Get trading signal for a symbol"""
@@ -413,12 +482,12 @@ def add_custom_token():
         address = data.get('address', '')
         
         if not symbol or not address:
-            return jsonify({'error': 'Symbol ve address gerekli'}), 400
+            return jsonify({'error': 'Symbol and address required'}), 400
         
         # Check if token already exists
         for token in custom_tokens:
             if token['symbol'] == symbol or token['address'].lower() == address.lower():
-                return jsonify({'error': 'Bu token zaten mevcut'}), 400
+                return jsonify({'error': 'This token already exists'}), 400
         
         # Add custom token
         custom_token = {
@@ -433,7 +502,7 @@ def add_custom_token():
         
         return jsonify({
             'success': True,
-            'message': f'{symbol} token başarıyla eklendi',
+            'message': f'{symbol} token added successfully',
             'token': custom_token
         })
         
